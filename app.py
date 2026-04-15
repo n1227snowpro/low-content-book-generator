@@ -46,8 +46,27 @@ def generate():
     if not output_name.endswith(".pdf"):
         output_name += ".pdf"
 
+    PAGE_SIZES = {
+        "8.25x11":  (8.25, 11.0),
+        "8.5x11":   (8.5,  11.0),
+        "6x9":      (6.0,   9.0),
+        "5.5x8.5":  (5.5,   8.5),
+    }
+    page_size = request.form.get("page_size", "original")
+
     try:
-        img = Image.open(file.stream).convert("RGB")
+        img_raw = Image.open(file.stream)
+        img = img_raw.convert("RGB")
+
+        if page_size in PAGE_SIZES:
+            w_in, h_in = PAGE_SIZES[page_size]
+            dpi_x = img.width / w_in
+        else:
+            dpi = img_raw.info.get("dpi", (300, 300))
+            dpi_x = dpi[0] if isinstance(dpi, tuple) else dpi
+            if not dpi_x or dpi_x < 1:
+                dpi_x = 300
+
         pages = [img.copy() for _ in range(num_pages - 1)]
 
         pdf_buffer = io.BytesIO()
@@ -56,7 +75,7 @@ def generate():
             format="PDF",
             save_all=True,
             append_images=pages,
-            resolution=150,
+            resolution=dpi_x,
         )
         pdf_buffer.seek(0)
 

@@ -38,8 +38,13 @@ def generate_book(input_path: str, num_pages: int, output_path=None) -> str:
     print(f"  Output PDF  : {output_path}")
     print()
 
-    # Open and convert image to RGB (required for PDF save)
-    img = Image.open(input_path).convert("RGB")
+    # Open image and read its DPI metadata
+    img_raw = Image.open(input_path)
+    dpi = img_raw.info.get("dpi", (300, 300))
+    dpi_x = dpi[0] if isinstance(dpi, tuple) else dpi
+    if not dpi_x or dpi_x < 1:
+        dpi_x = 300
+    img = img_raw.convert("RGB")
 
     # Build the list of duplicated pages
     print(f"Generating {num_pages} pages...", end="", flush=True)
@@ -52,7 +57,7 @@ def generate_book(input_path: str, num_pages: int, output_path=None) -> str:
         format="PDF",
         save_all=True,
         append_images=pages,
-        resolution=150,  # DPI — adjust if needed
+        resolution=dpi_x,
     )
     print(" done.")
 
