@@ -425,8 +425,14 @@
       const response = await fetch("/generate", { method: "POST", body: formData });
 
       if (!response.ok) {
-        const data = await response.json();
-        throw new Error(data.error || "Unknown server error.");
+        let msg = "Unknown server error.";
+        try {
+          const data = await response.json();
+          msg = data.error || msg;
+        } catch (_) {
+          msg = `Server error (${response.status} ${response.statusText})`;
+        }
+        throw new Error(msg);
       }
 
       // Trigger download
